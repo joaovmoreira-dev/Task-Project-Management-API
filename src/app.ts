@@ -1,11 +1,17 @@
 import express from "express";
+import { logger } from "./middlewares/logger";
+import { errorHandler } from "./errors/errorHandler";
+import routes from "./routes";
 
 const app = express();
 
 app.use(express.json());
+app.use(logger);
 
-app.get("/health", (req, res) => {
-  return res.status(200).json({ status: "OK" });
-});
+// Rotas
+app.use(routes);
+
+// Handler global de erros (sempre por último)
+app.use(errorHandler);
 
 export default app;
