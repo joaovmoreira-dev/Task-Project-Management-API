@@ -1,85 +1,154 @@
 # API Backend com Node.js, TypeScript e Express
 
-Projeto base de uma API backend desenvolvida com Node.js, TypeScript e Express.
+Projeto base de uma API backend desenvolvida com **Node.js**, **TypeScript** e **Express**.
 
-O objetivo deste projeto é consolidar os fundamentos de TypeScript no backend, estruturar corretamente uma aplicação Node.js e preparar a base para evoluções futuras como autenticação, banco de dados e testes automatizados.
+O objetivo deste projeto é consolidar os fundamentos de TypeScript no backend, estruturar corretamente uma aplicação Node.js e preparar a base para evoluções futuras como autenticação, integração com banco de dados e testes automatizados.
 
+---
 
-## Tecnologias Utilizadas
+## 🚀 Tecnologias Utilizadas
 
 - Node.js
 - TypeScript
 - Express
 - dotenv
-- ts-node-dev
+- Helmet
+- CORS
+- Docker (Postgres)
 
+---
 
-## Estrutura do Projeto
+## 📂 Estrutura do Projeto
 
-
-api-ts/
+```text
+Task-Project-Management-API/
 │
 ├── src/
-│ ├── app.ts
-│ └── server.ts
+│   ├── app.ts
+│   ├── server.ts
+│   ├── routes/
+│   ├── controllers/
+│   ├── middlewares/
+│   ├── errors/
+│   └── utils/
 │
+├── docker-compose.yml
 ├── .env
 ├── .gitignore
 ├── package.json
 └── tsconfig.json
+```
 
-##  Como Executar o Projeto
+---
 
-1. Instalar as dependências:
+## ⚙️ Como Executar o Projeto
 
-    npm install
+### 1) Pré-requisitos
 
-2. Criar o arquivo .env:
+- Node.js (versão LTS recomendada)
+- Docker + Docker Compose
 
-    Na raiz do projeto, crie um arquivo chamado .env com o seguinte conteúdo:
+---
 
-    PORT=3000
+### 2) Configurar variáveis de ambiente
 
-3. Rodar em ambiente de desenvolvimento:
+Crie um arquivo `.env` na raiz do projeto:
 
-    npm run dev
+```env
+PORT=3000
 
-    O servidor iniciará em:
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=api_ts_db
+```
 
-    http://localhost:3000
+---
 
-    Endpoint Disponível
+### 3) Subir o banco de dados (Postgres)
 
-    Health Check
+```bash
+docker compose up -d
+```
 
-    GET /health
+Verificar se está rodando:
 
-    Resposta esperada:
+```bash
+docker ps
+```
 
-        {
-        "status": "OK"
-        }
+---
 
-## Objetivo do Projeto
+### 4) Instalar dependências
 
-    Aprender configuração de TypeScript no backend
+```bash
+npm install
+```
 
-    Entender a estrutura básica do Express
+---
 
-    Organizar corretamente a inicialização do servidor
+### 5) Rodar em ambiente de desenvolvimento
 
-    Aplicar boas práticas desde o início
+```bash
+npm run dev
+```
 
-## Próximos Passos
+Servidor disponível em:
 
-    Estruturar rotas e controllers
+```text
+http://localhost:3000
+```
 
-    Criar middlewares personalizados
+---
 
-    Implementar tratamento global de erros
+## 🔍 Endpoint Disponível
 
-    Adicionar autenticação com JWT
+### Health Check
 
-    Integrar banco de dados
+```text
+GET /health
+```
+
+Resposta esperada:
+
+```json
+{
+  "status": "OK"
+}
+```
+
+---
+
+## 🧠 Conceitos Aplicados
+
+- Separação de responsabilidades (routes, controllers, middlewares)
+- Logger de requisições
+- Tratamento global de erros
+- Hardening inicial com Helmet e CORS
+- Banco de dados isolado via Docker
+- Configuração via variáveis de ambiente
+
+---
+
+## 🎯 Objetivo do Projeto
+
+- Aprender configuração de TypeScript no backend
+- Entender a estrutura básica do Express
+- Organizar corretamente a inicialização do servidor
+- Aplicar boas práticas desde o início
+- Preparar base para evolução arquitetural
+
+---
+
+## 📌 Próximos Passos
+
+- Implementar autenticação com JWT
+- Integrar ORM (Prisma ou Sequelize)
+- Criar sistema de usuários e permissões
+- Adicionar testes automatizados
+- Preparar deploy
+
+---
 
 Desenvolvido por João Moreira.
