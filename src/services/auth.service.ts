@@ -2,9 +2,12 @@ import bcrypt from "bcrypt";
 import jwt, { type Secret ,type SignOptions } from "jsonwebtoken";
 import { UserRepository } from "../repositories/user.repository";
 import type { StringValue } from "ms"
+import { RoleRepository } from "../repositories/role.repository";
 
 
 type LoginInput = { email: string; password: string};
+
+type RegisterInput = { name: string; email: string; password: string };
 
 export const AuthService = {
     async login(input: LoginInput) {
@@ -53,5 +56,45 @@ export const AuthService = {
             status: 200 as const,
             data: {accessToken, user:userSafe}
         }
-    }
-}
+    },
+    async register (input: RegisterInput) {
+        const name = input.name.trim();
+        const email = input.email.trim().toLocaleLowerCase();
+        const password = input.password;
+
+        const existingUser = await UserRepository.findByEmailWithPassword(email);
+        if(existingUser) {
+            return {
+                ok: false as const,
+                status: 409 as const,
+                message: "Email já cadastrado",
+            };
+        }
+
+        const memberRole = await RoleRepository.findByName("MEMBER");
+        if(!memberRole) {
+            return {
+                ok: false as const,
+                status: 500 as const,
+                message: "Erro interno",
+            };
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        const createdUser = await UserRepository.create({
+            name,
+            email,
+            passwordHash,
+            roleId: memberRole.id,
+        });
+
+        return {
+            ok: true as const,
+            status: 201 as const,
+            data: {
+                user: createdUser,
+            },
+        };
+    },
+};
