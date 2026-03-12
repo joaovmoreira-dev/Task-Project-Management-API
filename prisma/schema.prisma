@@ -28,4 +28,15 @@ model User {
   roleId       String
   role         Role     @relation(fields:[roleId], references:[id])
   createdAt    DateTime @default(now())
+
+  projects     Project[]
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  name        String    
+  description String?
+  ownerId     String    
+  owner       User    @relation(fields:[ownerId], references:[id])
+  createdAt   DateTime  @default(now())
 }
