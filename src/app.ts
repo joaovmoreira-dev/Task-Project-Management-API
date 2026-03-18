@@ -6,6 +6,7 @@ import { logger } from "./middlewares/logger";
 import { errorHandler } from "./errors/errorHandler";
 import routes from "./routes";
 import { authRoutes } from "./routes/auth.routes";
+import { projectRoutes } from "./modules/project.route";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(logger);
 // Rotas
 app.use(routes);
 app.use("/auth", authRoutes);
+app.use("/projects", projectRoutes);
 
 // Handler global de erros
 app.use(errorHandler);
