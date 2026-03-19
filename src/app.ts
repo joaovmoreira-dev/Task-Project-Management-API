@@ -4,9 +4,9 @@ import cors from "cors";
 
 import { logger } from "./middlewares/logger";
 import { errorHandler } from "./errors/errorHandler";
-import routes from "./routes";
-import { authRoutes } from "./routes/auth.routes";
-import { projectRoutes } from "./modules/project.route";
+import routes from "./modules/health";
+import { authRoutes } from "../src/modules/auth/auth.routes";
+import { projectRoutes } from "./modules/project/project.route";
 
 const app = express();
 

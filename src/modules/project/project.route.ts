@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ProjectController } from "./project.controller";
-import { authMiddleware } from "../middlewares/authBearer";
+import { authMiddleware } from "../../middlewares/authBearer";
 
 export const projectRoutes = Router();
 

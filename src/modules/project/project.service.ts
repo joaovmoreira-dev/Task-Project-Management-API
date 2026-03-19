@@ -1,5 +1,5 @@
-import { ProjectRepository } from "./project.repository";
-import { createProject, updateProject } from "./dto/project.dto";
+import { ProjectRepository } from "../project/project.repository";
+import { createProject, updateProject } from "./project.dto";
 
 export const ProjectService = {
     async create( userId: string, data: createProject) {

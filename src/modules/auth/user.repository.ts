@@ -1,4 +1,4 @@
-import { prisma } from "../database/prisma";
+import { prisma } from "../../database/prisma";
 import type { Prisma } from "@prisma/client";
 
 const userSafeSelect = {

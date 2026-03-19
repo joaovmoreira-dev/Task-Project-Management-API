@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { UserRepository } from "../repositories/user.repository";
+import { UserRepository } from "./user.repository";
 
 export const AuthMeController = {
   async me(req: Request, res: Response) {

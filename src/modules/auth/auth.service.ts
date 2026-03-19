@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt, { type Secret ,type SignOptions } from "jsonwebtoken";
-import { UserRepository } from "../repositories/user.repository";
+import { UserRepository } from "../auth/user.repository";
 import type { StringValue } from "ms"
-import { RoleRepository } from "../repositories/role.repository";
+import { RoleRepository } from "../auth/role.repository";
 
 
 type LoginInput = { email: string; password: string};

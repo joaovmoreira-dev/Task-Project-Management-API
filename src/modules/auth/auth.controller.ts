@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
+import { AuthService } from "../auth/auth.service";
 
 function isValidEmail(email: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

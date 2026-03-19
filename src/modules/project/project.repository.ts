@@ -1,5 +1,5 @@
-import { prisma } from "../database/prisma";
-import { createProject, updateProject } from "./dto/project.dto";
+import { prisma } from "../../database/prisma";
+import { createProject, updateProject } from "./project.dto";
 
 export const ProjectRepository = {
     async create( data:  createProject, ownerId: string) {
