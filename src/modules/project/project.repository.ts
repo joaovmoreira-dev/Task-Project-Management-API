@@ -5,7 +5,8 @@ export const ProjectRepository = {
     async create( data:  createProject, ownerId: string) {
         return prisma.project.create ({ 
             data: {
-                ...data,
+                name: data.name,
+                description: data.description,
                 ownerId,
             }
          });
@@ -15,6 +16,9 @@ export const ProjectRepository = {
         return prisma.project.findMany ({
             where: {
                 ownerId: userId,
+            },
+            orderBy: {
+                createdAt: "desc"
             }
         });
     },

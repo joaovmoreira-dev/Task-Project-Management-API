@@ -1,67 +1,55 @@
-# API Backend com Node.js, TypeScript e Express
+# Task & Project Management API
 
-Projeto base de uma API backend desenvolvida com **Node.js**, **TypeScript** e **Express**.
+API backend desenvolvida com **Node.js**, **TypeScript** e **Express**, focada em boas práticas de arquitetura, segurança e escalabilidade.
 
-O objetivo deste projeto é consolidar os fundamentos de TypeScript no backend, estruturar corretamente uma aplicação Node.js e preparar a base para evoluções futuras como autenticação, integração com banco de dados e testes automatizados.
+Este projeto simula um ambiente real de aplicação corporativa, com controle de usuários, projetos e regras de acesso baseadas em ownership.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - Node.js
 - TypeScript
 - Express
 - Prisma ORM
 - PostgreSQL (Docker)
+- JWT (autenticação)
 - dotenv
 - Helmet
 - CORS
 
 ---
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 
-Task-Project-Management-API/
-│
-├── src/
-│   ├── app.ts
-│   ├── server.ts
-│   ├── database/
-│   │   └── prisma.ts
-│   ├── repositories/
-│   ├── routes/
-│   ├── controllers/
-│   ├── middlewares/
-│   ├── errors/
-│   └── utils/
-│
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts
-│
-├── docker-compose.yml
-├── prisma.config.ts
-├── .env
-├── .gitignore
-├── package.json
-└── tsconfig.json
+src/
+├── app.ts
+├── server.ts
+├── database/
+│   └── prisma.ts
+├── modules/
+│   ├── project/
+│   └── user/
+├── middlewares/
+├── errors/
+└── utils/
 
 ---
 
-## ⚙️ Como Executar o Projeto
+## Como Executar o Projeto
 
 ### 1) Pré-requisitos
 
-- Node.js (versão LTS recomendada)
+- Node.js (LTS)
 - Docker + Docker Compose
 
 ---
 
-### 2) Configurar variáveis de ambiente
+### 2) Variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+Crie `.env`:
 
-PORT=3000 
+PORT=3000
 
 DB_HOST=localhost
 DB_PORT=5433
@@ -71,17 +59,13 @@ DB_NAME=api_ts_db
 
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api_ts_db?schema=public"
 
-> Se estiver usando outra porta (ex: 5433), ajuste na DATABASE_URL.
+JWT_SECRET=your_secret
 
 ---
 
-### 3) Subir o banco de dados (Postgres)
+### 3) Subir banco
 
 docker compose up -d
-
-Verificar containers ativos:
-
-docker ps
 
 ---
 
@@ -91,40 +75,31 @@ npm install
 
 ---
 
-### 5) Rodar migrations (criar/atualizar tabelas)
+### 5) Rodar migrations
 
 npx prisma migrate dev
 
 ---
 
-### 6) Rodar seed (inserir dados iniciais)
+### 6) Rodar seed
 
 npx prisma db seed
 
-O seed insere automaticamente as roles:
-- ADMIN
-- MANAGER
-- MEMBER
-
 ---
 
-### 7) Rodar aplicação em desenvolvimento
+### 7) Rodar aplicação
 
 npm run dev
 
-Servidor disponível em:
-
-http://localhost:3000
-
 ---
 
-## 🔍 Endpoint Disponível
+## 🔍 Endpoints
 
 ### Health Check
 
 GET /health
 
-Resposta esperada:
+Resposta:
 
 {
   "status": "OK"
@@ -132,19 +107,70 @@ Resposta esperada:
 
 ---
 
-## 🗄️ Banco de Dados
+## Projects API
 
-O banco é versionado via **Prisma Migrate**.
+### Criar projeto
 
-### Estrutura atual:
+POST /projects
 
-- Role
+Body:
+
+{
+  "name": "Projeto Alpha",
+  "description": "Descrição do projeto"
+}
+
+---
+
+### Listar projetos
+
+GET /projects
+
+✔ Retorna apenas projetos do usuário autenticado
+
+---
+
+### Buscar projeto por ID
+
+GET /projects/:id
+
+---
+
+### Atualizar projeto
+
+PATCH /projects/:id
+
+---
+
+### Deletar projeto
+
+DELETE /projects/:id
+
+---
+
+## 🔐 Regras de Segurança (Ownership)
+
+- Todo projeto possui um `ownerId`
+- O `ownerId` é definido automaticamente pelo backend
+- O cliente NÃO pode enviar `ownerId` no payload
+- Usuários só podem:
+  - visualizar seus próprios projetos
+  - atualizar seus próprios projetos
+  - deletar seus próprios projetos
+
+---
+
+## Banco de Dados
+
+Gerenciado com Prisma Migrate.
+
+### Entidades principais:
+
 - User
-- Relação User → Role
-- email único
-- passwordHash obrigatório
+- Role
+- Project
 
-### Dados iniciais (Seed):
+### Seed inicial:
 
 - ADMIN
 - MANAGER
@@ -152,37 +178,39 @@ O banco é versionado via **Prisma Migrate**.
 
 ---
 
-## 🧠 Conceitos Aplicados
+## Conceitos Aplicados
 
-- Separação de responsabilidades (routes, controllers, repositories)
-- Camada de acesso ao banco isolada (Repository Pattern)
-- Prisma Client centralizado
+- Arquitetura em camadas (Controller / Service / Repository)
+- Separação de responsabilidades
+- Ownership (segurança multiusuário)
+- Validação de dados no service
+- Middleware de autenticação (JWT)
 - Tratamento global de erros
-- Hardening básico com Helmet e CORS
-- Banco isolado via Docker
-- Versionamento de schema com migrations
-- Seed idempotente para dados obrigatórios
+- Prisma como ORM
+- Docker para isolamento do banco
+- Migrations versionadas
 
 ---
 
-## 🎯 Objetivo do Projeto
+## Objetivo do Projeto
 
-- Consolidar backend com TypeScript
-- Estruturar arquitetura organizada e escalável
-- Aplicar boas práticas desde o início
-- Preparar base sólida para autenticação e autorização (RBAC)
-
----
-
-## 📌 Próximos Passos
-
-- Implementar autenticação com JWT
-- Implementar hash de senha com bcrypt
-- Criar middleware de autorização (RBAC)
-- Adicionar testes automatizados
-- Preparar ambiente de produção
-- Implementar deploy
+- Simular backend corporativo real
+- Aplicar boas práticas de arquitetura
+- Demonstrar segurança em APIs multiusuário
+- Servir como projeto âncora de portfólio
 
 ---
 
-Desenvolvido por João Moreira.
+## Próximos Passos
+
+- RBAC (Admin pode acessar qualquer recurso)
+- Validação de payload (Zod ou class-validator)
+- Testes automatizados (Jest + Supertest)
+- Logs estruturados
+- Deploy (Docker + cloud)
+
+---
+
+## Autor
+
+Desenvolvido por João Moreira

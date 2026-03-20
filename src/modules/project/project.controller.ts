@@ -14,6 +14,10 @@ export const ProjectController = {
             name,
             description,
         });
+
+        if(!project) {
+            return res.status(400).json({ message: "Dados Inválidos" });
+        }
         
         return res.status(201).json(project); 
     },
@@ -23,7 +27,7 @@ export const ProjectController = {
 
         const projects = await ProjectService.findAllByUser(userId)
 
-        return res.json(projects);
+        return res.status(200).json(projects);
     },
 
      async findById (req: Request, res: Response){
@@ -36,20 +40,24 @@ export const ProjectController = {
             return res.status(404).json({ message: "Projeto não encontrado" });
         }
 
-        return res.json(project);
+        return res.status(200).json(project);
      },
 
      async update (req: Request, res: Response){
         const userId = req.auth?.userId as string;
         const { id } = req.params as {id: string};
+        const { name, description } = req.body;
 
-        const project = await ProjectService.update(userId, id, req.body);
+        const project = await ProjectService.update(userId, id, {
+            name,
+            description,
+        });
 
         if (!project) {
             return res.status(404).json({ message: "Projeto não encontrado" });
         }
 
-        return res.json(project);
+        return res.status(200).json(project);
     },
 
      async delete (req: Request, res: Response){
@@ -62,7 +70,7 @@ export const ProjectController = {
             return res.status(404).json({ message: "Projeto não encontrado" });
         }
 
-        return res.status(202).send();
+        return res.status(204).send();
     },
 
 };
