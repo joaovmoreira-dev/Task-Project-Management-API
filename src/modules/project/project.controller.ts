@@ -6,18 +6,10 @@ export const ProjectController = {
         const userId = req.auth?.userId as string;
         const { name, description } = req.body;
 
-        if (!name) {
-            return res.status(400).json({ message: "Nome é Obrigatório" });
-        }
-
         const project = await ProjectService.create(userId, {
             name,
             description,
         });
-
-        if(!project) {
-            return res.status(400).json({ message: "Dados Inválidos" });
-        }
         
         return res.status(201).json(project); 
     },
@@ -32,43 +24,34 @@ export const ProjectController = {
 
      async findById (req: Request, res: Response){
         const userId = req.auth?.userId as string;
+        const role = req.auth?.role as string;
         const { id } = req.params as {id: string};
 
-        const project = await ProjectService.findById(userId, id);
-
-        if (!project){
-            return res.status(404).json({ message: "Projeto não encontrado" });
-        }
+        const project = await ProjectService.findById(userId, role, id);
 
         return res.status(200).json(project);
      },
 
      async update (req: Request, res: Response){
         const userId = req.auth?.userId as string;
+        const role = req.auth?.role as string;
         const { id } = req.params as {id: string};
         const { name, description } = req.body;
 
-        const project = await ProjectService.update(userId, id, {
+        const project = await ProjectService.update(userId, role, id, {
             name,
             description,
         });
-
-        if (!project) {
-            return res.status(404).json({ message: "Projeto não encontrado" });
-        }
 
         return res.status(200).json(project);
     },
 
      async delete (req: Request, res: Response){
         const userId = req.auth?.userId as string;
+        const role = req.auth?.role as string;
         const { id } = req.params as {id: string};
 
-        const project = await ProjectService.delete(userId, id);
-
-        if (!project) {
-            return res.status(404).json({ message: "Projeto não encontrado" });
-        }
+        await ProjectService.delete(userId, role, id);
 
         return res.status(204).send();
     },

@@ -1,13 +1,41 @@
-import { describe } from "node:test";
+import { AppError } from "../../errors/AppErrors";
 import { ProjectRepository } from "../project/project.repository";
 import { createProject, updateProject } from "./project.dto";
+
+function ensureProjectPermission(
+    project: { ownerId: string } | null,
+    userId: string,
+    role:   string,
+) {
+    if (!project) {
+        throw new AppError("Projeto não encontrado", 404);
+    };
+
+    const isOwner = project.ownerId === userId;
+    const isAdmin = role === "ADMIN";
+
+    if (!isOwner && !isAdmin){
+        throw new AppError("Você não tem permissão para acessar esse projeto", 403);
+    } 
+};
 
 export const ProjectService = {
     async create( userId: string, data: createProject) {
         const name = data.name?.trim();
+        const description = data.description?.trim();
 
-        if(!name){
-            return null;
+        if(!name) {
+            throw new AppError("Nome não pode ser vazio", 400);
+        }
+
+        if(name.length > 100) {
+            throw new AppError("Nome deve ter no máximo 100 caracteres", 400);
+        }
+        
+        if(data.description !== undefined) {
+            if(description && description.length > 255) {
+                throw new AppError ("Descrição deve ter no máximo 255 caracteres", 400);
+            }
         }
 
         return ProjectRepository.create({ 
@@ -21,39 +49,46 @@ export const ProjectService = {
         return ProjectRepository.findAllByUser(userId);
     },
 
-    async findById(userId: string, projectId: string) {
+    async findById(userId: string, role: string, projectId: string) {
         const project = await ProjectRepository.findById(projectId);
 
-        if (!project || project.ownerId !== userId) {
-            return null;
-        };
-
+        ensureProjectPermission(project, userId, role)
+        
         return project;
     },
 
-    async update( userId: string, projectId: string, data: updateProject ) {
+    async update( userId: string, role: string, projectId: string, data: updateProject ) {
         const project = await ProjectRepository.findById(projectId);
+        ensureProjectPermission( project, userId, role )
 
-        if (!project || project.ownerId !== userId) {
-            return null;
+        const name = data.name?.trim();
+        const description = data.description?.trim();
+
+        if(data.name !== undefined) {
+            if(!name) {
+                throw new AppError("Nome não pode ser vazio", 400);
+            }
+
+            if(name.length > 100) {
+                throw new AppError("Nome deve ter no máximo 100 caracteres", 400);
+            }
         }
-
-        if (data.name !== undefined && !data.name.trim()){
-            return null
+        if(data.description !== undefined) {
+            if(description && description.length > 255) {
+                throw new AppError ("Descrição deve ter no máximo 255 caracteres", 400);
+            }
         }
 
         return ProjectRepository.update(projectId, {
-            name: data.name?.trim(),
-            description: data.description?.trim(),
+            ...(data.name !== undefined && {name}),
+            ...(data.description !== undefined && {description}),
         });
     },
 
-    async delete( userId: string, projectId: string ) {    
+    async delete( userId: string, role: string, projectId: string ) {    
         const project = await ProjectRepository.findById(projectId)
 
-        if (!project || project.ownerId !== userId) {
-            return null;
-        }
+        ensureProjectPermission( project, userId, role )
 
         await ProjectRepository.delete(projectId);
 

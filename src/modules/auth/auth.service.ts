@@ -37,7 +37,7 @@ export const AuthService = {
         const expiresIn: SignOptions["expiresIn"] = (process.env.JWT_EXPIRES_IN as StringValue | undefined) ?? "15m";
 
         const accessToken = jwt.sign(
-            {userId: user.id, role: user.role?.name },
+            {userId: user.id, role: user.role.name },
             secret as Secret,
             {expiresIn}
         );
