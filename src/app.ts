@@ -6,7 +6,8 @@ import { logger } from "./middlewares/logger";
 import { errorHandler } from "./errors/errorHandler";
 import routes from "./modules/health";
 import { authRoutes } from "../src/modules/auth/auth.routes";
-import { projectRoutes } from "./modules/project/project.route";
+import { projectRoutes } from "./modules/project/project.routes";
+import { taskRoutes } from "./modules/task/task.routes";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use(logger);
 app.use(routes);
 app.use("/auth", authRoutes);
 app.use("/projects", projectRoutes);
+app.use("/tasks", taskRoutes);
 
 // Handler global de erros
 app.use(errorHandler);
