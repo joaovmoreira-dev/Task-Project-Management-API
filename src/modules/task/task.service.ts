@@ -1,6 +1,8 @@
 import { AppError } from "../../errors/AppErrors";
 import { TaskRepository } from "./task.repository";
 import { CreateTaskDTO, UpdateTaskDTO, UpdateTaskStatusDTO } from "./task.dto";
+import { ProjectRepository } from "../project/project.repository";
+import { UserRepository } from "../auth/user.repository";
 
 const VALID_STATUSES = [ "TODO", "DOING", "DONE" ];
 
@@ -12,6 +14,18 @@ export const TaskService = {
 
         if(data.title.trim().length > 100) {
             throw new AppError("Título deve ter no máximo 100 caracteres",400);
+        };
+
+        const project = await ProjectRepository.findById(data.projectId);
+        if(!project) {
+            throw new AppError("Projeto não encontrado", 404);
+        };
+
+        if(data.assignedTo) {
+            const user = await UserRepository.findById(data.assignedTo);
+            if(!user) {
+                throw new AppError("Usuário não encontrado", 404)
+            };
         };
 
         return TaskRepository.create ({
@@ -53,13 +67,20 @@ export const TaskService = {
             if (data.title.trim().length > 100) {
                 throw new AppError("Título deve ter no maxímo 100 caracteres");
             };
+        };
 
-            return TaskRepository.update(id, {
+        if (data.assignedTo !== undefined && data.assignedTo !== null) {
+            const user = await UserRepository.findById(data.assignedTo);
+            if(!user) {
+                throw new AppError("Usuário não encontrado", 404);
+            };
+        };
+
+        return TaskRepository.update(id, {
                 ...(data.title !== undefined && { title: data.title.trim() }),
                 ...(data.description !== undefined && { description: data.description.trim() }),
                 ...(data.assignedTo !== undefined && { assignedTo: data.assignedTo })
             });
-        };
 
     },
 
