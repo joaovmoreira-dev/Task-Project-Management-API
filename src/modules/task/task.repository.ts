@@ -6,26 +6,36 @@ export const TaskRepository = {
         return prisma.task.create({
             data: {
                 title: data.title,
-                description: data.description,  
+                description: data.description,
                 projectId: data.projectId,
                 assignedTo: data.assignedTo,
-            }
+            },
         });
     },
 
-    async findAll(projectId?: string, status?: string) {
+    async findAll(projectId?: string, status?: string, assignedTo?: string) {
         return prisma.task.findMany({
             where: {
                 ...(projectId && { projectId }),
                 ...(status && { status: status as any }),
+                ...(assignedTo && { assignedTo }),
             },
-            orderBy: { createdAt: "desc" }
+            orderBy: { createdAt: "desc" },
         });
     },
 
     async findById(id: string) {
         return prisma.task.findUnique({
-            where: { id }
+            where: { id },
+        });
+    },
+
+    async findByIdWithProject(id: string) {
+        return prisma.task.findUnique({
+            where: { id },
+            include: {
+                project: true,
+            },
         });
     },
 
@@ -42,7 +52,7 @@ export const TaskRepository = {
             data: { status: data.status },
         });
     },
-    
+
     async delete(id: string) {
         return prisma.task.delete({
             where: { id },
