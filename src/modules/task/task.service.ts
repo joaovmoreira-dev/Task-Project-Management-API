@@ -3,6 +3,7 @@ import { TaskRepository } from "./task.repository";
 import { CreateTaskDTO, UpdateTaskDTO, UpdateTaskStatusDTO } from "./task.dto";
 import { ProjectRepository } from "../project/project.repository";
 import { UserRepository } from "../auth/user.repository";
+import { isAdmin, isManager, isMember } from "../../utils/roleHelpers";
 
 const VALID_STATUSES = ["TODO", "DOING", "DONE"];
 
@@ -15,13 +16,11 @@ function ensureTaskPermission(
         throw new AppError("Task não encontrada", 404);
     }
 
-    const isAdmin = role === "ADMIN";
-    const isManager = role === "MANAGER";
     const isAssigned = task.assignedTo === userId;
     const isProjectOwner = task.project.ownerId === userId;
 
-    if (isAdmin) return;
-    if (isManager && isProjectOwner) return;
+    if (isAdmin(role)) return;
+    if (isManager(role) && isProjectOwner) return;
     if (isAssigned) return;
 
     throw new AppError("Você não tem permissão para executar essa ação", 403);
@@ -61,7 +60,7 @@ export const TaskService = {
             throw new AppError("Status inválido", 400);
         }
 
-        if (role === "MEMBER") {
+        if (isMember(role)) {
             return TaskRepository.findAll(projectId, status, userId);
         }
 
@@ -75,7 +74,7 @@ export const TaskService = {
             throw new AppError("Task não encontrada", 404);
         }
 
-        if (role === "MEMBER" && task.assignedTo !== userId) {
+        if (isMember(role) && task.assignedTo !== userId) {
             throw new AppError("Você não tem permissão para acessar essa task", 403);
         }
 
