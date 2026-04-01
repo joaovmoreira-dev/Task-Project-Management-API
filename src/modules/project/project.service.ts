@@ -1,6 +1,7 @@
 import { AppError } from "../../errors/AppErrors";
 import { ProjectRepository } from "../project/project.repository";
 import { createProject, updateProject } from "./project.dto";
+import { isAdmin } from "../../utils/roleHelpers";
 
 function ensureProjectPermission(
     project: { ownerId: string } | null,
@@ -12,9 +13,8 @@ function ensureProjectPermission(
     };
 
     const isOwner = project.ownerId === userId;
-    const isAdmin = role === "ADMIN";
 
-    if (!isOwner && !isAdmin){
+    if (!isOwner && !isAdmin(role)){
         throw new AppError("Você não tem permissão para acessar esse projeto", 403);
     } 
 };
@@ -52,14 +52,14 @@ export const ProjectService = {
     async findById(userId: string, role: string, projectId: string) {
         const project = await ProjectRepository.findById(projectId);
 
-        ensureProjectPermission(project, userId, role)
+        ensureProjectPermission(project, userId, role);
         
         return project;
     },
 
     async update( userId: string, role: string, projectId: string, data: updateProject ) {
         const project = await ProjectRepository.findById(projectId);
-        ensureProjectPermission( project, userId, role )
+        ensureProjectPermission( project, userId, role );
 
         const name = data.name?.trim();
         const description = data.description?.trim();
