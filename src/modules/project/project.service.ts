@@ -15,7 +15,7 @@ function ensureProjectPermission(
     const isOwner = project.ownerId === userId;
 
     if (!isOwner && !isAdmin(role)){
-        throw new AppError("Você não tem permissão para acessar esse projeto", 403);
+        throw new AppError("Acesso negado", 403);
     } 
 };
 

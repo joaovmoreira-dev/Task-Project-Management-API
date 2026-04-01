@@ -2,7 +2,7 @@
 
 API backend desenvolvida com **Node.js**, **TypeScript** e **Express**, focada em boas práticas de arquitetura, segurança e escalabilidade.
 
-Este projeto simula um ambiente real de aplicação corporativa, com controle de usuários, projetos e regras de acesso baseadas em ownership.
+Este projeto simula um ambiente real de aplicação corporativa, com controle de usuários, projetos, tarefas e regras de acesso baseadas em ownership e papéis (RBAC).
 
 ---
 
@@ -14,6 +14,7 @@ Este projeto simula um ambiente real de aplicação corporativa, com controle de
 - Prisma ORM
 - PostgreSQL (Docker)
 - JWT (autenticação)
+- bcrypt
 - dotenv
 - Helmet
 - CORS
@@ -22,17 +23,18 @@ Este projeto simula um ambiente real de aplicação corporativa, com controle de
 
 ## Estrutura do Projeto
 
-src/
-├── app.ts
-├── server.ts
-├── database/
-│   └── prisma.ts
-├── modules/
-│   ├── project/
-│   └── user/
-├── middlewares/
-├── errors/
-└── utils/
+    src/
+    ├── app.ts
+    ├── server.ts
+    ├── database/
+    │   └── prisma.ts
+    ├── modules/
+    │   ├── auth/
+    │   ├── project/
+    │   └── task/
+    ├── middlewares/
+    ├── errors/
+    └── utils/
 
 ---
 
@@ -49,114 +51,217 @@ src/
 
 Crie `.env`:
 
-PORT=3000
+    PORT=3000
 
-DB_HOST=localhost
-DB_PORT=5433
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=api_ts_db
+    DB_HOST=localhost
+    DB_PORT=5433
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_NAME=api_ts_db
 
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api_ts_db?schema=public"
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api_ts_db?schema=public"
 
-JWT_SECRET=your_secret
+    JWT_SECRET=your_secret
+    JWT_EXPIRES_IN=15m
 
 ---
 
 ### 3) Subir banco
 
-docker compose up -d
+    docker compose up -d
 
 ---
 
 ### 4) Instalar dependências
 
-npm install
+    npm install
 
 ---
 
 ### 5) Rodar migrations
 
-npx prisma migrate dev
+    npx prisma migrate dev
 
 ---
 
 ### 6) Rodar seed
 
-npx prisma db seed
+    npx prisma db seed
 
 ---
 
 ### 7) Rodar aplicação
 
-npm run dev
+    npm run dev
 
 ---
 
-## 🔍 Endpoints
+## Endpoints
 
 ### Health Check
 
-GET /health
+    GET /health
 
 Resposta:
 
-{
-  "status": "OK"
-}
+    { "status": "OK" }
+
+---
+
+## Auth API
+
+### Registrar usuário
+
+    POST /auth/register
+
+Body:
+
+    {
+      "name": "João Moreira",
+      "email": "joao@email.com",
+      "password": "senha123"
+    }
+
+> Novos usuários são registrados com a role **MEMBER** por padrão.
+
+---
+
+### Login
+
+    POST /auth/login
+
+Body:
+
+    {
+      "email": "joao@email.com",
+      "password": "senha123"
+    }
+
+Resposta:
+
+    {
+      "accessToken": "JWT_TOKEN",
+      "user": { ... }
+    }
+
+---
+
+### Dados do usuário autenticado
+
+    GET /auth/me
+
+> Requer autenticação.
 
 ---
 
 ## Projects API
 
+> Todas as rotas exigem autenticação (`Authorization: Bearer <token>`)
+
 ### Criar projeto
 
-POST /projects
+    POST /projects
 
 Body:
 
-{
-  "name": "Projeto Alpha",
-  "description": "Descrição do projeto"
-}
+    {
+      "name": "Projeto Alpha",
+      "description": "Descrição do projeto"
+    }
 
 ---
 
 ### Listar projetos
 
-GET /projects
+    GET /projects
 
-✔ Retorna apenas projetos do usuário autenticado
+Retorna apenas projetos do usuário autenticado.
 
 ---
 
 ### Buscar projeto por ID
 
-GET /projects/:id
+    GET /projects/:id
 
 ---
 
 ### Atualizar projeto
 
-PATCH /projects/:id
+    PATCH /projects/:id
 
 ---
 
 ### Deletar projeto
 
-DELETE /projects/:id
+    DELETE /projects/:id
 
 ---
 
-## 🔐 Regras de Segurança (Ownership)
+## Tasks API
 
-- Todo projeto possui um `ownerId`
-- O `ownerId` é definido automaticamente pelo backend
-- O cliente NÃO pode enviar `ownerId` no payload
-- Usuários só podem:
-  - visualizar seus próprios projetos
-  - atualizar seus próprios projetos
-  - deletar seus próprios projetos
+> Todas as rotas exigem autenticação (`Authorization: Bearer <token>`)
+
+### Criar task
+
+    POST /tasks
+
+Restrito a **ADMIN** e **MANAGER**.
+
+Body:
+
+    {
+      "title": "Criar tela de login",
+      "description": "Implementar formulário",
+      "projectId": "uuid-do-projeto",
+      "assignedTo": "uuid-do-usuario"
+    }
+
+---
+
+### Listar tasks
+
+    GET /tasks
+    GET /tasks?projectId=uuid
+    GET /tasks?status=TODO
+    GET /tasks?projectId=uuid&status=DOING
+
+> **MEMBER** vê apenas tasks atribuídas a ele.
+
+---
+
+### Buscar task por ID
+
+    GET /tasks/:id
+
+> **MEMBER** só acessa tasks atribuídas a ele.
+
+---
+
+### Atualizar task
+
+    PATCH /tasks/:id
+
+Restrito a **ADMIN** e **MANAGER**.
+
+---
+
+### Atualizar status
+
+    PATCH /tasks/:id/status
+
+Body:
+
+    { "status": "DOING" }
+
+Status disponíveis: `TODO`, `DOING`, `DONE`
+
+---
+
+### Deletar task
+
+    DELETE /tasks/:id
+
+Restrito a **ADMIN** e **MANAGER**.
 
 ---
 
@@ -164,17 +269,38 @@ DELETE /projects/:id
 
 Gerenciado com Prisma Migrate.
 
-### Entidades principais:
+### Entidades principais
 
 - User
 - Role
 - Project
+- Task
 
-### Seed inicial:
+### Seed inicial
 
-- ADMIN
-- MANAGER
-- MEMBER
+- Roles: `ADMIN`, `MANAGER`, `MEMBER`
+
+---
+
+## Regras de Segurança
+
+### Ownership de Projetos
+
+- Todo projeto possui um `ownerId` definido automaticamente pelo backend
+- O cliente não pode enviar `ownerId` no payload
+- Usuários só visualizam, atualizam e deletam seus próprios projetos
+- ADMIN tem acesso a qualquer projeto
+
+### RBAC de Tasks
+
+| Ação             | MEMBER               | MANAGER          | ADMIN |
+|------------------|----------------------|------------------|-------|
+| Criar task       | ✗                    | ✅               | ✅    |
+| Listar tasks     | Só as suas           | ✅               | ✅    |
+| Buscar task      | Só as suas           | ✅               | ✅    |
+| Atualizar task   | ✗                    | ✅ (seu projeto) | ✅    |
+| Atualizar status | ✅ (atribuída a ele) | ✅               | ✅    |
+| Deletar task     | ✗                    | ✅ (seu projeto) | ✅    |
 
 ---
 
@@ -183,8 +309,11 @@ Gerenciado com Prisma Migrate.
 - Arquitetura em camadas (Controller / Service / Repository)
 - Separação de responsabilidades
 - Ownership (segurança multiusuário)
+- RBAC com middleware `requireRole`
+- Role embutida no JWT (sem consulta ao banco)
+- Helpers de role centralizados (`roleHelpers.ts`)
 - Validação de dados no service
-- Middleware de autenticação (JWT)
+- Middleware de autenticação (JWT Bearer)
 - Tratamento global de erros
 - Prisma como ORM
 - Docker para isolamento do banco
@@ -203,7 +332,6 @@ Gerenciado com Prisma Migrate.
 
 ## Próximos Passos
 
-- RBAC (Admin pode acessar qualquer recurso)
 - Validação de payload (Zod ou class-validator)
 - Testes automatizados (Jest + Supertest)
 - Logs estruturados
@@ -213,4 +341,4 @@ Gerenciado com Prisma Migrate.
 
 ## Autor
 
-Desenvolvido por João Moreira
+Desenvolvado por João Moreira

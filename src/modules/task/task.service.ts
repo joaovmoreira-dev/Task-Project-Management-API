@@ -23,7 +23,7 @@ function ensureTaskPermission(
     if (isManager(role) && isProjectOwner) return;
     if (isAssigned) return;
 
-    throw new AppError("Você não tem permissão para executar essa ação", 403);
+    throw new AppError("Acesso negado", 403);
 }
 
 export const TaskService = {
@@ -75,7 +75,7 @@ export const TaskService = {
         }
 
         if (isMember(role) && task.assignedTo !== userId) {
-            throw new AppError("Você não tem permissão para acessar essa task", 403);
+            throw new AppError("Acesso negado", 403);
         }
 
         return task;

@@ -15,7 +15,7 @@ export const AuthService = {
 
         const invalid = () => ({
             ok: false as const,
-            status: 402 as const,
+            status: 401 as const,
             message: "Credenciais inválidas",
         });
 
