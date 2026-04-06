@@ -83,7 +83,15 @@ export const AuthService = {
                 ok: false as const,
                 status: 400 as const,
                 message: "Nome é obrigatório"
-             }
+             };
+        };
+
+        if(name.length > 100) {
+            return {
+                ok: false as const,
+                status: 400 as const,
+                message: "Nome deve ter no máximo 100 caracteres"
+            };
         };
 
         if(!email) {   
@@ -91,14 +99,22 @@ export const AuthService = {
                 ok: false as const,
                 status: 400 as const,
                 message: "Email é obrigatório"
-            }
+            };
+        };
+
+        if(email.length > 150) {
+            return {
+                ok: false as const,
+                status: 400 as const,
+                message: "Email inválido"
+            };
         };
 
         if(!password || password.length < 6) {
             return {
                 ok: false as const,
                 status: 400,
-                message: "Senha deve ter no minímo 6 caracteres"
+                message: "Senha deve ter no mínimo 6 caracteres"
             }
         };
 
