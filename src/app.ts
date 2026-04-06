@@ -3,9 +3,12 @@ import helmet from "helmet";
 import cors from "cors";
 
 import { logger } from "./middlewares/logger";
+import { generalRateLimiter } from "./middlewares/rateLimiter";
+
 import { errorHandler } from "./errors/errorHandler";
+
 import routes from "./modules/health";
-import { authRoutes } from "../src/modules/auth/auth.routes";
+import { authRoutes } from "./modules/auth/auth.routes";
 import { projectRoutes } from "./modules/project/project.routes";
 import { taskRoutes } from "./modules/task/task.routes";
 
@@ -30,6 +33,8 @@ app.use(
 
 app.use(express.json());
 app.use(logger);
+
+app.use(generalRateLimiter);
 
 // Rotas
 app.use(routes);
