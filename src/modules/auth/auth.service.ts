@@ -13,6 +13,22 @@ export const AuthService = {
     async login(input: LoginInput) {
         const email = input.email.trim().toLowerCase();
 
+        if (!email) {
+            return {
+                ok: false as const,
+                status: 400,
+                message: "Email é obrigatório"
+            }
+        };
+
+        if (!input.password) {
+            return {
+                ok: false as const,
+                status: 400,
+                message: "Senha é obrigatória"
+            }   
+        }
+
         const invalid = () => ({
             ok: false as const,
             status: 401 as const,
@@ -47,7 +63,7 @@ export const AuthService = {
             return {
                 ok: false as const,
                 status: 500 as const,
-                message: "Erro Interno",
+                message: "Erro interno",
             };
         }
 
@@ -61,6 +77,30 @@ export const AuthService = {
         const name = input.name.trim();
         const email = input.email.trim().toLocaleLowerCase();
         const password = input.password;
+
+        if(!name) {
+            return { 
+                ok: false as const,
+                status: 400 as const,
+                message: "Nome é obrigatório"
+             }
+        };
+
+        if(!email) {   
+            return {
+                ok: false as const,
+                status: 400 as const,
+                message: "Email é obrigatório"
+            }
+        };
+
+        if(!password || password.length < 6) {
+            return {
+                ok: false as const,
+                status: 400,
+                message: "Senha deve ter no minímo 6 caracteres"
+            }
+        };
 
         const existingUser = await UserRepository.findByEmailWithPassword(email);
         if(existingUser) {
