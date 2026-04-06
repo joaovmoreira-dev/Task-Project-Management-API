@@ -15,9 +15,15 @@ const app = express();
 app.use(helmet());
 
 //Controla quais domínios podem acessar a API via navegador;
+
+const allowedOrigin = process.env.CORS_ORIGIN;
+const isDev = process.env.NODE_ENV === "development";
+
 app.use(
     cors({
-        origin:true,
+        origin:isDev ? true : allowedOrigin,
+        methods: ["GET", "POST", "PATCH", "DELETE"],
+        allowedHeaders: ["Content-Type", "Autorization"],
         credentials: true,
     })
 );
