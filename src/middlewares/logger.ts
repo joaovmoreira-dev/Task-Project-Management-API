@@ -5,8 +5,13 @@ export function logger(req: Request, res: Response, next: NextFunction) {
 
   res.on("finish", () => {
     const durationMs = Date.now() - startedAt;
-    // Exemplo: [200] GET /health - 3ms
-    console.log(`[${res.statusCode}] ${req.method} ${req.originalUrl} - ${durationMs}ms`);
+    const timestamp = new Date().toISOString();
+
+    const level = res.statusCode >= 500 ? "ERROR"
+                : res.statusCode >= 400 ? "WARN"
+                : "INFO";
+    
+    console.log(`[${timestamp}] [${level}] [${res.statusCode}] ${req.method} ${req.originalUrl} - ${durationMs}ms`);
   });
 
   next();
