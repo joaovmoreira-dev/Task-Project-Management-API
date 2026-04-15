@@ -19,6 +19,18 @@ enum TaskStatus {
   DONE
 }
 
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_DELETED
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_DELETED
+}
+
 model Role {
   id        String   @id @default(uuid())
   name      RoleName @unique
@@ -37,6 +49,7 @@ model User {
 
   projects      Project[]
   assignedTasks Task[]   @relation("assignedTasks")
+  auditLogs AuditLog[]
 }
 
 model Project {
@@ -60,4 +73,14 @@ model Task {
   assignedTo   String?    
   assignedUser User?      @relation("assignedTasks", fields:[assignedTo], references:[id])
   createdAt    DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id])
+  action    AuditAction
+  entity    String?
+  entityId  String?
+  createdAt DateTime    @default(now())
 }
