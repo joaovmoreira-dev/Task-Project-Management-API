@@ -3,7 +3,7 @@ import jwt, { type Secret ,type SignOptions } from "jsonwebtoken";
 import { UserRepository } from "../auth/user.repository";
 import type { StringValue } from "ms"
 import { RoleRepository } from "../auth/role.repository";
-
+import { AuditService } from "../audit/audit.service";
 
 type LoginInput = { email: string; password: string};
 
@@ -36,11 +36,16 @@ export const AuthService = {
         });
 
         const user = await UserRepository.findByEmailWithPassword(email);
-        if (!user) return invalid();
+        if (!user) {
+            await AuditService.log({ action: "LOGIN_FAILED" });
+            return invalid();
+        }
 
         const match = await bcrypt.compare(input.password, user.passwordHash);
-        if (!match) return invalid();
-
+        if (!match) {
+            await AuditService.log({ action: "LOGIN_FAILED" });
+            return invalid();
+        }
         const secret = process.env.JWT_SECRET;
         if (!secret) {
             //erro de infra, não é culpa do cliente
@@ -66,6 +71,8 @@ export const AuthService = {
                 message: "Erro interno",
             };
         }
+
+        await AuditService.log({ userId: user.id, action: "LOGIN_SUCCESS" });
 
         return {
             ok: true as const,

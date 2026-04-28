@@ -4,6 +4,7 @@ import { CreateTaskDTO, UpdateTaskDTO, UpdateTaskStatusDTO } from "./task.dto";
 import { ProjectRepository } from "../project/project.repository";
 import { UserRepository } from "../auth/user.repository";
 import { isAdmin, isManager, isMember } from "../../utils/roleHelpers";
+import { AuditService } from "../audit/audit.service";
 
 const VALID_STATUSES = ["TODO", "DOING", "DONE"];
 
@@ -27,7 +28,7 @@ function ensureTaskPermission(
 }
 
 export const TaskService = {
-    async create(data: CreateTaskDTO) {
+    async create(userId: string, data: CreateTaskDTO) {
         if (!data.title?.trim()) {
             throw new AppError("Título é obrigatório", 400);
         }
@@ -48,11 +49,20 @@ export const TaskService = {
             }
         }
 
-        return TaskRepository.create({
+        const task = await TaskRepository.create({
             ...data,
             title: data.title.trim(),
             description: data.description?.trim(),
         });
+
+        await AuditService.log({
+            userId,
+            action: "TASK_CREATED",
+            entity: "Task",
+            entityId: task.id,     
+        })
+
+        return task;
     },
 
     async findAll(userId: string, role: string, projectId?: string, status?: string) {
@@ -102,11 +112,20 @@ export const TaskService = {
             }
         }
 
-        return TaskRepository.update(id, {
+        const updated = await TaskRepository.update(id, {
             ...(data.title !== undefined && { title: data.title.trim() }),
             ...(data.description !== undefined && { description: data.description.trim() }),
             ...(data.assignedTo !== undefined && { assignedTo: data.assignedTo }),
         });
+
+        await AuditService.log({
+            userId,
+            action: "TASK_UPDATED",
+            entity: "Task",
+            entityId: id,
+        })
+
+        return updated;
     },
 
     async updateStatus(userId: string, role: string, id: string, data: UpdateTaskStatusDTO) {
@@ -118,7 +137,16 @@ export const TaskService = {
             throw new AppError("Status inválido", 400);
         }
 
-        return TaskRepository.updateStatus(id, data);
+        const updated = await TaskRepository.updateStatus(id, data);
+
+        await AuditService.log({
+            userId,
+            action: "TASK_STATUS_CHANGED",
+            entity: "Task",
+            entityId: id,
+        }) 
+
+        return updated;
     },
 
     async delete(userId: string, role: string, id: string) {
@@ -127,6 +155,13 @@ export const TaskService = {
         ensureTaskPermission(task, userId, role);
 
         await TaskRepository.delete(id);
+
+        await AuditService.log({
+            userId,
+            action:"TASK_DELETED",
+            entity: "Task",
+            entityId: id,
+        })
 
         return true;
     },

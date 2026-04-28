@@ -3,9 +3,10 @@ import { TaskService } from "./task.service";
 
 export const TaskController = {
     async create(req: Request, res: Response) {
+        const userId = req.auth?.userId as string;
         const { title, description, projectId, assignedTo } = req.body;
 
-        const task = await TaskService.create({
+        const task = await TaskService.create(userId, {
             title,
             description,
             projectId,

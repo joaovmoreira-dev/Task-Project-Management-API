@@ -2,6 +2,7 @@ import { AppError } from "../../errors/AppErrors";
 import { ProjectRepository } from "../project/project.repository";
 import { createProject, updateProject } from "./project.dto";
 import { isAdmin } from "../../utils/roleHelpers";
+import { AuditService } from "../audit/audit.service";
 
 function ensureProjectPermission(
     project: { ownerId: string } | null,
@@ -38,11 +39,19 @@ export const ProjectService = {
             }
         }
 
-        return ProjectRepository.create({ 
+        const project = await ProjectRepository.create({ 
             name, 
             description: data.description?.trim() 
-        }, 
-        userId);
+        }, userId);
+
+        await AuditService.log({
+            userId,
+            action: "PROJECT_CREATED",
+            entity: "Project",
+            entityId: (await project).id,
+        })
+
+        return project;
     },
 
     async findAllByUser(userId: string) {
@@ -79,10 +88,19 @@ export const ProjectService = {
             }
         }
 
-        return ProjectRepository.update(projectId, {
+        const updated = await ProjectRepository.update(projectId, {
             ...(data.name !== undefined && {name}),
             ...(data.description !== undefined && {description}),
         });
+
+        await AuditService.log({
+            userId,
+            action: "PROJECT_UPDATED",
+            entity: "Project",
+            entityId: projectId,
+        });
+
+        return updated;
     },
 
     async delete( userId: string, role: string, projectId: string ) {    
@@ -91,6 +109,13 @@ export const ProjectService = {
         ensureProjectPermission( project, userId, role )
 
         await ProjectRepository.delete(projectId);
+
+        await AuditService.log({
+            userId,
+            action: "PROJECT_DELETED",
+            entity: "Project",
+            entityId: projectId,
+        });
 
         return true;
     },
