@@ -11,6 +11,7 @@ import routes from "./modules/health";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { projectRoutes } from "./modules/project/project.routes";
 import { taskRoutes } from "./modules/task/task.routes";
+import { auditRoutes } from "./modules/audit/audit.routes";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use(routes);
 app.use("/auth", authRoutes);
 app.use("/projects", projectRoutes);
 app.use("/tasks", taskRoutes);
+app.use("/audit-logs", auditRoutes);
 
 // Handler global de erros
 app.use(errorHandler);
