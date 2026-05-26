@@ -1,6 +1,8 @@
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./docs/swagger";
 
 import { logger } from "./middlewares/logger";
 import { generalRateLimiter } from "./middlewares/rateLimiter";
@@ -34,6 +36,7 @@ app.use(
 
 app.use(express.json());
 app.use(logger);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(generalRateLimiter);
 
