@@ -6,292 +6,91 @@ Este projeto simula um ambiente real de aplicação corporativa, com controle de
 
 ---
 
+## Links
+
+- **API em produção:** https://task-project-management-api-production.up.railway.app
+- **Documentação Swagger:** https://task-project-management-api-production.up.railway.app/api-docs
+- **Health Check:** https://task-project-management-api-production.up.railway.app/health
+
+---
+
 ## Tecnologias Utilizadas
 
-- Node.js
-- TypeScript
+- Node.js + TypeScript
 - Express
 - Prisma ORM
 - PostgreSQL (Docker)
 - JWT (autenticação)
 - bcrypt
-- dotenv
-- Helmet
-- CORS
+- Helmet + CORS
+- express-rate-limit
+- swagger-ui-express
+- Jest + Supertest (testes)
+- Docker + Docker Compose
+- Railway (deploy)
 
 ---
 
-## Estrutura do Projeto
+## Arquitetura
+
+O projeto segue arquitetura em camadas com separação clara de responsabilidades:
 
     src/
-    ├── app.ts
-    ├── server.ts
+    ├── app.ts                  → configuração do Express
+    ├── server.ts               → entrada da aplicação
     ├── database/
-    │   └── prisma.ts
+    │   └── prisma.ts           → instância do Prisma Client
+    ├── docs/
+    │   ├── swagger.ts          → configuração do Swagger
+    │   └── routes/             → documentação dos endpoints
     ├── modules/
-    │   ├── auth/
-    │   ├── project/
-    │   └── task/
+    │   ├── auth/               → autenticação (login, register, me)
+    │   ├── project/            → CRUD de projetos
+    │   ├── task/               → CRUD de tasks
+    │   └── audit/              → logs de auditoria
     ├── middlewares/
+    │   ├── authBearer.ts       → validação do JWT
+    │   ├── requireRole.ts      → autorização por role
+    │   ├── rateLimiter.ts      → rate limiting
+    │   └── logger.ts           → log de requisições
     ├── errors/
+    │   ├── AppErrors.ts        → classe de erro customizada
+    │   └── errorHandler.ts     → handler global de erros
     └── utils/
+        └── roleHelpers.ts      → helpers de verificação de role
+
+**Fluxo de uma requisição:**
+
+    Request → authMiddleware → requireRole → Controller → Service → Repository → Banco
 
 ---
 
-## Como Executar o Projeto
+## Segurança
 
-### 1) Pré-requisitos
+### Autenticação
+- JWT com expiração configurável via `JWT_EXPIRES_IN`
+- Role embutida no token — sem consulta ao banco em cada request
+- bcrypt com salt 10 para hash de senhas
+- Mensagens neutras no login — não revela se email existe
 
-- Node.js (LTS)
-- Docker + Docker Compose
+### Autorização
+- **Ownership** — projetos só podem ser acessados pelo owner ou ADMIN
+- **RBAC** — roles controlam acesso a endpoints via middleware `requireRole`
+- Role vem do JWT, não do banco
 
----
+### Hardening
+- Helmet configurando headers de segurança (XSS, clickjacking, MIME sniffing)
+- CORS restrito por ambiente — em produção aceita apenas `CORS_ORIGIN`
+- Rate limiting no login (10 tentativas / 10 min) e global (60 req / min)
+- Nenhum stack trace exposto nas respostas
 
-### 2) Variáveis de ambiente
-
-Crie `.env`:
-
-    PORT=3000
-
-    DB_HOST=localhost
-    DB_PORT=5433
-    DB_USER=postgres
-    DB_PASSWORD=postgres
-    DB_NAME=api_ts_db
-
-    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api_ts_db?schema=public"
-
-    JWT_SECRET=your_secret
-    JWT_EXPIRES_IN=15m
+### Auditoria
+- Todas as ações críticas são registradas no banco (login, CRUD de projetos e tasks)
+- Endpoint `GET /audit-logs` exclusivo para ADMIN com filtros e paginação
 
 ---
 
-### 3) Subir banco
-
-    docker compose up -d
-
----
-
-### 4) Instalar dependências
-
-    npm install
-
----
-
-### 5) Rodar migrations
-
-    npx prisma migrate dev
-
----
-
-### 6) Rodar seed
-
-    npx prisma db seed
-
----
-
-### 7) Rodar aplicação
-
-    npm run dev
-
----
-
-## Endpoints
-
-### Health Check
-
-    GET /health
-
-Resposta:
-
-    { "status": "OK" }
-
----
-
-## Auth API
-
-### Registrar usuário
-
-    POST /auth/register
-
-Body:
-
-    {
-      "name": "João Moreira",
-      "email": "joao@email.com",
-      "password": "senha123"
-    }
-
-> Novos usuários são registrados com a role **MEMBER** por padrão.
-
----
-
-### Login
-
-    POST /auth/login
-
-Body:
-
-    {
-      "email": "joao@email.com",
-      "password": "senha123"
-    }
-
-Resposta:
-
-    {
-      "accessToken": "JWT_TOKEN",
-      "user": { ... }
-    }
-
----
-
-### Dados do usuário autenticado
-
-    GET /auth/me
-
-> Requer autenticação.
-
----
-
-## Projects API
-
-> Todas as rotas exigem autenticação (`Authorization: Bearer <token>`)
-
-### Criar projeto
-
-    POST /projects
-
-Body:
-
-    {
-      "name": "Projeto Alpha",
-      "description": "Descrição do projeto"
-    }
-
----
-
-### Listar projetos
-
-    GET /projects
-
-Retorna apenas projetos do usuário autenticado.
-
----
-
-### Buscar projeto por ID
-
-    GET /projects/:id
-
----
-
-### Atualizar projeto
-
-    PATCH /projects/:id
-
----
-
-### Deletar projeto
-
-    DELETE /projects/:id
-
----
-
-## Tasks API
-
-> Todas as rotas exigem autenticação (`Authorization: Bearer <token>`)
-
-### Criar task
-
-    POST /tasks
-
-Restrito a **ADMIN** e **MANAGER**.
-
-Body:
-
-    {
-      "title": "Criar tela de login",
-      "description": "Implementar formulário",
-      "projectId": "uuid-do-projeto",
-      "assignedTo": "uuid-do-usuario"
-    }
-
----
-
-### Listar tasks
-
-    GET /tasks
-    GET /tasks?projectId=uuid
-    GET /tasks?status=TODO
-    GET /tasks?projectId=uuid&status=DOING
-
-> **MEMBER** vê apenas tasks atribuídas a ele.
-
----
-
-### Buscar task por ID
-
-    GET /tasks/:id
-
-> **MEMBER** só acessa tasks atribuídas a ele.
-
----
-
-### Atualizar task
-
-    PATCH /tasks/:id
-
-Restrito a **ADMIN** e **MANAGER**.
-
----
-
-### Atualizar status
-
-    PATCH /tasks/:id/status
-
-Body:
-
-    { "status": "DOING" }
-
-Status disponíveis: `TODO`, `DOING`, `DONE`
-
----
-
-### Deletar task
-
-    DELETE /tasks/:id
-
-Restrito a **ADMIN** e **MANAGER**.
-
----
-
-## Banco de Dados
-
-Gerenciado com Prisma Migrate.
-
-### Entidades principais
-
-- User
-- Role
-- Project
-- Task
-
-### Seed inicial
-
-- Roles: `ADMIN`, `MANAGER`, `MEMBER`
-
----
-
-## Regras de Segurança
-
-### Ownership de Projetos
-
-- Todo projeto possui um `ownerId` definido automaticamente pelo backend
-- O cliente não pode enviar `ownerId` no payload
-- Usuários só visualizam, atualizam e deletam seus próprios projetos
-- ADMIN tem acesso a qualquer projeto
-
-### RBAC de Tasks
+## RBAC de Tasks
 
 | Ação             | MEMBER               | MANAGER          | ADMIN |
 |------------------|----------------------|------------------|-------|
@@ -304,6 +103,154 @@ Gerenciado com Prisma Migrate.
 
 ---
 
+## Como Executar
+
+### Modo local (sem Docker para a API)
+
+**Pré-requisitos:** Node.js LTS + Docker
+
+    # 1. Clone o repositório
+    git clone https://github.com/Joao-Vitor-Moreira/Task-Project-Management-API.git
+    cd Task-Project-Management-API
+
+    # 2. Instale as dependências
+    npm install
+
+    # 3. Crie o .env baseado no .env.example
+    cp .env.example .env
+
+    # 4. Suba apenas o banco via Docker
+    docker compose up -d postgres
+
+    # 5. Rode as migrations
+    npx prisma migrate dev
+
+    # 6. Rode o seed (roles iniciais)
+    npx prisma db seed
+
+    # 7. Inicie a aplicação
+    npm run dev
+
+---
+
+### Modo Docker completo
+
+**Pré-requisitos:** Docker + Docker Compose
+
+    # 1. Clone o repositório
+    git clone https://github.com/Joao-Vitor-Moreira/Task-Project-Management-API.git
+    cd Task-Project-Management-API
+
+    # 2. Crie o .env.docker baseado no .env.example
+    # Altere DATABASE_URL para usar @postgres ao invés de @localhost
+
+    # 3. Suba tudo
+    docker compose up -d --build
+
+A API estará disponível em `http://localhost:3000`.
+
+---
+
+### Variáveis de ambiente
+
+Crie `.env` baseado no `.env.example`:
+
+    PORT=3000
+    NODE_ENV=development
+
+    DB_PORT=5433
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_NAME=api_ts_db
+
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5433/api_ts_db?schema=public"
+
+    JWT_SECRET=your_secret_here
+    JWT_EXPIRES_IN=15m
+
+    CORS_ORIGIN=http://localhost:5173
+
+---
+
+## Testes
+
+    # Rodar todos os testes
+    npm test
+
+    # Rodar com cobertura
+    npm run test:coverage
+
+A suíte de testes cobre autenticação, projetos, tasks, RBAC e edge cases com Jest + Supertest.
+
+---
+
+## Endpoints
+
+A documentação completa e interativa está disponível no Swagger:
+
+**Local:** http://localhost:3000/api-docs
+
+**Produção:** https://task-project-management-api-production.up.railway.app/api-docs
+
+### Resumo
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| GET | /health | Health check | — |
+| POST | /auth/register | Registrar usuário | — |
+| POST | /auth/login | Login | — |
+| GET | /auth/me | Dados do usuário | ✅ |
+| POST | /projects | Criar projeto | ✅ |
+| GET | /projects | Listar projetos | ✅ |
+| GET | /projects/:id | Buscar projeto | ✅ |
+| PATCH | /projects/:id | Atualizar projeto | ✅ |
+| DELETE | /projects/:id | Deletar projeto | ✅ |
+| POST | /tasks | Criar task | ✅ MANAGER+ |
+| GET | /tasks | Listar tasks | ✅ |
+| GET | /tasks/:id | Buscar task | ✅ |
+| PATCH | /tasks/:id | Atualizar task | ✅ MANAGER+ |
+| PATCH | /tasks/:id/status | Atualizar status | ✅ |
+| DELETE | /tasks/:id | Deletar task | ✅ MANAGER+ |
+| GET | /audit-logs | Logs de auditoria | ✅ ADMIN |
+
+---
+
+## Banco de Dados
+
+Gerenciado com Prisma Migrate.
+
+### Entidades
+
+- **User** — usuário com role
+- **Role** — ADMIN, MANAGER, MEMBER
+- **Project** — projeto com owner
+- **Task** — task vinculada a projeto e usuário
+- **AuditLog** — registro de ações críticas
+
+### Seed inicial
+
+    npx prisma db seed
+
+Cria as roles: `ADMIN`, `MANAGER`, `MEMBER`
+
+---
+
+## Decisões e Trade-offs
+
+**Por que Prisma?**
+Type-safety nativa com TypeScript, migrations versionadas e developer experience superior ao Sequelize para projetos novos.
+
+**Por que JWT stateless?**
+Sem necessidade de consulta ao banco a cada request — a role já vem no token. Trade-off: não é possível invalidar tokens antes do vencimento sem uma blacklist.
+
+**Por que endpoint separado para status?**
+Status é uma regra de negócio diferente de update de dados — MEMBER pode alterar status de tasks atribuídas a ele mas não pode alterar title ou description. Separar os endpoints permite aplicar permissões distintas de forma limpa.
+
+**Por que RBAC no middleware e ownership no service?**
+RBAC é uma regra genérica aplicável a qualquer rota — pertence ao middleware. Ownership é uma regra de negócio específica que precisa consultar o banco — pertence ao service.
+
+---
+
 ## Conceitos Aplicados
 
 - Arquitetura em camadas (Controller / Service / Repository)
@@ -311,34 +258,20 @@ Gerenciado com Prisma Migrate.
 - Ownership (segurança multiusuário)
 - RBAC com middleware `requireRole`
 - Role embutida no JWT (sem consulta ao banco)
-- Helpers de role centralizados (`roleHelpers.ts`)
+- Helpers de role centralizados
 - Validação de dados no service
-- Middleware de autenticação (JWT Bearer)
+- Middleware de autenticação JWT Bearer
+- Rate limiting por endpoint
+- Auditoria de ações críticas
 - Tratamento global de erros
-- Prisma como ORM
-- Docker para isolamento do banco
-- Migrations versionadas
-
----
-
-## Objetivo do Projeto
-
-- Simular backend corporativo real
-- Aplicar boas práticas de arquitetura
-- Demonstrar segurança em APIs multiusuário
-- Servir como projeto âncora de portfólio
-
----
-
-## Próximos Passos
-
-- Validação de payload (Zod ou class-validator)
-- Testes automatizados (Jest + Supertest)
-- Logs estruturados
-- Deploy (Docker + cloud)
+- Docker para isolamento e deploy
+- Testes de integração com Jest + Supertest
+- Documentação interativa com Swagger
 
 ---
 
 ## Autor
 
-Desenvolvado por João Moreira
+Desenvolvido por João Moreira
+
+[![GitHub](https://img.shields.io/badge/GitHub-Joao--Vitor--Moreira-181717?logo=github)](https://github.com/Joao-Vitor-Moreira)

@@ -29,7 +29,7 @@ app.use(
     cors({
         origin:isDev ? true : allowedOrigin,
         methods: ["GET", "POST", "PATCH", "DELETE"],
-        allowedHeaders: ["Content-Type", "Autorization"],
+        allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
     })
 );

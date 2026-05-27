@@ -13,6 +13,10 @@ const options: swaggerJsdoc.Options = {
                 url: "http://localhost:3000",
                 description: "Servidor local",
             },
+            {
+                url: "https://task-project-management-api-production.up.railway.app",
+                description: "Servidor Railway",
+            },
         ],
         components: {
             securitySchemes: {
