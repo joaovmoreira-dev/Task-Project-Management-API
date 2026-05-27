@@ -16,6 +16,7 @@ import { taskRoutes } from "./modules/task/task.routes";
 import { auditRoutes } from "./modules/audit/audit.routes";
 
 const app = express();
+app.set('trust proxy', 1);
 
 //Segurança headers;
 app.use(helmet());
